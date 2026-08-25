@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.WindowManager
 import android.webkit.WebChromeClient
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
@@ -33,11 +34,12 @@ class MainActivity : AppCompatActivity() {
         settings.setSupportZoom(false)
         settings.loadWithOverviewMode = true
         settings.useWideViewPort = true
+        // 触控 + 多点触控
         webView.isClickable = true
         webView.isFocusable = true
         webView.isFocusableInTouchMode = true
 
-        webView.webViewClient = WebViewClient() // 始终在应用内加载
+        webView.webViewClient = WebViewClient() // 禁止跳转系统浏览器，始终在应用内加载
         webView.webChromeClient = WebChromeClient()
         webView.isVerticalScrollBarEnabled = false
 
@@ -45,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl("file:///android_asset/index.html")
     }
 
-    // 返回键：优先返回应用内
+    // 返回键：让页面自身处理（优先返回应用内）
     override fun onBackPressed() {
         val webView: WebView = findViewById(R.id.webView)
         if (webView.canGoBack()) webView.goBack() else super.onBackPressed()
