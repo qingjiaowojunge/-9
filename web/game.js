@@ -1998,6 +1998,10 @@ if(IS_MOBILE){
   bindBtn('btnMap',function(){toggleMap();},null);
   bindBtn('btnTele',function(){teleportUp();},null);
   bindBtn('btnPause',function(){document.getElementById('pauseScr').classList.remove('hidden');},null);
+  // 手机端 hotbar 触摸切换物品
+  slotCanvases.forEach(function(sc,i){
+   sc.div.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();onHotbarTap(i);},{passive:false});
+  });
  })();
 }
 

@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pages: write
-      id-token: write
 
     steps:
       # 1. 拉取代码
@@ -30,13 +28,13 @@ jobs:
       - name: 安装 Android SDK
         uses: android-actions/setup-android@v3
 
-      # 4. 用 sdkmanager 显式安装编译所需的 SDK 组件（最可靠）
+      # 4. 用 sdkmanager 显式安装编译所需的 SDK 组件
       - name: 安装 SDK 组件
         run: |
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      # 5. 准备游戏资源：把 web/ 复制进 APK assets，并下载本地 three.min.js（避免依赖外部 CDN）
+      # 5. 准备游戏资源
       - name: 准备游戏资源
         run: |
           mkdir -p app/src/main/assets
@@ -46,7 +44,7 @@ jobs:
             "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
           ls -la app/src/main/assets/
 
-      # 6. 安装 Gradle 8.2（与 wrapper.properties 中版本一致）
+      # 6. 安装 Gradle 8.2
       - name: 安装 Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
@@ -56,24 +54,14 @@ jobs:
       - name: 编译 Debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
 
-      # 8. 重命名 APK 为纯英文名（避免 URL 编码导致下载链接失效）
-      # 固定文件名 → 下载链接固定为：
-      # https://github.com/qingjiaowojunge/-9/releases/latest/download/MinecraftWeb.apk
+      # 8. 重命名 APK
       - name: 重命名 APK
         run: |
           mkdir -p output
           cp app/build/outputs/apk/debug/app-debug.apk "output/MinecraftWeb.apk"
           ls -la output/
 
-      # 9. 在线游玩预览：把游戏文件也放进 docs/game（GitHub Pages 可在线玩）
-      - name: 准备在线游玩预览
-        run: |
-          mkdir -p docs/game
-          cp web/index.html docs/game/index.html
-          cp web/game.js docs/game/game.js
-          cp app/src/main/assets/three.min.js docs/game/three.min.js
-
-      # 10. 创建 Tag 并发布 Release（自动上传 APK）
+      # 9. 创建 Tag 并发布 Release（自动上传 APK）
       - name: 创建 Release 并上传 APK
         uses: softprops/action-gh-release@v2
         with:
@@ -87,45 +75,11 @@ jobs:
             2. 文件管理器找到下载的 APK
             3. 开启「设置 → 安全 → 允许未知来源」
             4. 点击 APK 安装
-
-            ## 扫码下载
-            访问 https://${{ github.repository_owner }}.github.io/-9/
-            用手机扫描页面上的二维码即可下载
-
-            ## 在线游玩
-            网页版：https://${{ github.repository_owner }}.github.io/-9/game/
           files: output/MinecraftWeb.apk
           prerelease: false
 
-      # 11. 用 Python 生成二维码 PNG（避免下载页依赖外部 CDN）
-      - name: 生成二维码图片
+      # 10. 构建完成
+      - name: 构建完成
         run: |
-          pip install qrcode[pil] --quiet
-          python -c "
-          import qrcode
-          url = 'https://github.com/${{ github.repository_owner }}/-9/releases/latest/download/MinecraftWeb.apk'
-          img = qrcode.make(url)
-          img.save('docs/qr.png')
-          print('二维码已生成，内容：', url)
-          "
-
-      # 12. 把下载页 + 二维码图片 + 在线游玩 部署到 GitHub Pages
-      - name: 上传 Pages 构建产物
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
-
-  # 部署 GitHub Pages
-  deploy-pages:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: 部署到 GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          echo "APK 构建完成!"
+          echo "Release 已发布，可在 Releases 页面直接下载"
