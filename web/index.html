@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>我的世界 · Web版</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"Microsoft YaHei","Segoe UI",sans-serif;overscroll-behavior:none}
+  #app canvas{display:block;touch-action:none}
+  .hidden{display:none!important}
+
+  /* ---------- HUD ---------- */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+  #cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;
+    font:bold 22px monospace;text-shadow:0 0 3px #000;opacity:.85}
+  #mineProgWrap{position:absolute;left:50%;top:calc(50% + 26px);transform:translateX(-50%);
+    width:120px;height:8px;background:rgba(0,0,0,.5);border:1px solid #222;border-radius:4px;display:none}
+  #mineProg{height:100%;width:0;background:#7ec850;border-radius:3px}
+  #hearts{position:absolute;left:50%;bottom:74px;transform:translateX(-50%);
+    font-size:20px;letter-spacing:2px;text-shadow:1px 1px 2px #000}
+  #hearts .hf{color:#ff2b2b}#hearts .he{color:#3a0d0d}
+  #hotbar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:4px}
+  .slot{width:52px;height:52px;background:rgba(30,30,30,.75);border:3px solid #555;border-radius:4px;
+    position:relative;display:flex;align-items:center;justify-content:center}
+  .slot.sel{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,.6)}
+  .slot canvas{image-rendering:pixelated;width:40px;height:40px}
+  .slot .cnt{position:absolute;right:3px;bottom:1px;color:#fff;font:bold 13px monospace;text-shadow:1px 1px 1px #000}
+  .slot .key{position:absolute;left:3px;top:1px;color:#bbb;font-size:10px}
+  #msg{position:absolute;left:50%;bottom:140px;transform:translateX(-50%);color:#fff;
+    font-size:16px;text-shadow:1px 1px 2px #000;opacity:0;transition:opacity .4s;background:rgba(0,0,0,.35);
+    padding:6px 14px;border-radius:4px;max-width:80vw;text-align:center}
+  #info{position:absolute;left:10px;top:10px;color:#fff;font:12px monospace;text-shadow:1px 1px 2px #000;line-height:1.6;
+    background:rgba(0,0,0,.25);padding:6px 10px;border-radius:4px}
+  #vig{position:absolute;inset:0;box-shadow:inset 0 0 120px 60px rgba(255,0,0,.9);opacity:0;transition:opacity .15s}
+  #waterOv{position:absolute;inset:0;background:rgba(24,68,170,.38);opacity:0}
+  #handTip{position:absolute;right:12px;bottom:12px;color:#ddd;font-size:12px;text-shadow:1px 1px 2px #000;
+    background:rgba(0,0,0,.3);padding:8px 12px;border-radius:6px;line-height:1.8}
+
+  /* ---------- 面板/屏幕 ---------- */
+  .screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;color:#fff;text-align:center}
+  #startScr{background:linear-gradient(#3a4c2f,#20301a)}
+  #startScr h1{font-size:56px;color:#fff;text-shadow:3px 3px 0 #3f3f3f;margin-bottom:8px;letter-spacing:4px}
+  #startScr h1 span{color:#ffd83d}
+  #startScr .sub{color:#ffe97a;margin-bottom:26px;font-size:14px}
+  .panel{background:rgba(0,0,0,.45);border:2px solid #666;border-radius:8px;padding:18px 28px;
+    margin-bottom:24px;text-align:left;font-size:14px;line-height:2;max-height:46vh;overflow:auto}
+  .panel b{color:#8cf27a}
+  .panel kbd{background:#333;border:1px solid #777;border-radius:3px;padding:0 6px;font-family:monospace;margin:0 2px}
+  .mcbtn{pointer-events:auto;cursor:pointer;background:#7a7a7a;border:3px solid #fff;box-shadow:0 0 0 2px #000 inset;
+    color:#fff;font-size:20px;padding:12px 60px;text-shadow:2px 2px 0 #333;font-weight:bold}
+  .mcbtn:hover{background:#8f9b6e}
+  #deathScr{background:rgba(120,0,0,.55)}
+  #deathScr h1{font-size:48px;text-shadow:3px 3px 0 #400;margin-bottom:30px}
+  #pauseScr{background:rgba(0,0,0,.55)}
+  #pauseScr h1{margin-bottom:26px}
+
+  /* ---------- 合成 ---------- */
+  #craftPanel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;width:min(680px,94vw);
+    max-height:82vh;overflow:auto;background:#c6c6c6;border:4px solid #8b8b8b;border-radius:4px;
+    box-shadow:0 0 0 3px #000,0 10px 40px rgba(0,0,0,.7);padding:16px;color:#2c2c2c}
+  #craftPanel h2{text-align:center;margin-bottom:10px;font-size:20px}
+  .recipe{display:flex;align-items:center;gap:10px;background:#b0b0b0;border:2px solid #8b8b8b;
+    border-radius:4px;padding:8px 10px;margin-bottom:8px}
+  .recipe .out{display:flex;align-items:center;gap:8px;width:190px}
+  .recipe .out canvas{width:36px;height:36px;image-rendering:pixelated}
+  .recipe .ins{flex:1;font-size:13px;line-height:1.7}
+  .recipe .ins .lack{color:#b00000;font-weight:bold}
+  .recipe .ins .have{color:#0a6b0a}
+  .recipe button{cursor:pointer;background:#6d8f4f;border:2px solid #4a6434;color:#fff;padding:6px 16px;
+    border-radius:3px;font-weight:bold}
+  .recipe button:disabled{background:#888;border-color:#777;cursor:not-allowed;opacity:.6}
+  #craftClose{display:block;margin:8px auto 0;cursor:pointer;background:#6d8f4f;border:2px solid #4a6434;
+    color:#fff;padding:6px 26px;border-radius:3px}
+  #furnacePanel,#tradePanel,#mapPanel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;
+    max-height:84vh;overflow:auto;background:#c6c6c6;border:4px solid #8b8b8b;border-radius:4px;
+    box-shadow:0 0 0 3px #000,0 10px 40px rgba(0,0,0,.7);padding:16px;color:#2c2c2c}
+  #furnacePanel h2,#tradePanel h2,#mapPanel h2{text-align:center;margin-bottom:10px;font-size:20px}
+  #furnClose,#tradeClose,#mapClose{display:block;margin:8px auto 0;cursor:pointer;background:#6d8f4f;
+    border:2px solid #4a6434;color:#fff;padding:6px 26px;border-radius:3px}
+  #backpackPanel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;
+    max-height:84vh;overflow:auto;background:#c6c6c6;border:4px solid #8b8b8b;border-radius:4px;
+    box-shadow:0 0 0 3px #000,0 10px 40px rgba(0,0,0,.7);padding:16px;color:#2c2c2c;min-width:min(500px,90vw)}
+  #backpackPanel h2{text-align:center;margin-bottom:10px;font-size:20px}
+  #bpGrid{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:10px}
+  #bpGrid .bpSlot{width:52px;height:52px;background:#8b8b8b;border:2px solid #373737;border-radius:3px;
+    box-shadow:inset 2px 2px 0 rgba(255,255,255,.35),inset -2px -2px 0 rgba(0,0,0,.35);
+    position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  #bpGrid .bpSlot canvas{width:36px;height:36px;image-rendering:pixelated}
+  #bpGrid .bpSlot .cnt{position:absolute;right:2px;bottom:0;color:#fff;font:bold 12px monospace;text-shadow:1px 1px 1px #000}
+  #bpGrid .bpSlot.drag{opacity:0.5}
+  #bpGrid .bpSlot.drag-over{border-color:#ffeb3b;box-shadow:0 0 8px rgba(255,235,59,0.8)}
+  .slot.drag-over{border-color:#ffeb3b;box-shadow:0 0 6px rgba(255,235,59,0.8)}
+  .slot.drag{opacity:0.5}
+  #bpClose{display:block;margin:8px auto 0;cursor:pointer;background:#6d8f4f;
+    border:2px solid #4a6434;color:#fff;padding:6px 26px;border-radius:3px}
+
+  /* ---------- 合成网格 / 熔炉 / 交易 ---------- */
+  #craftMain{display:flex;align-items:center;gap:18px;justify-content:center;margin-bottom:12px}
+  #craftGrid{display:grid;grid-template-columns:repeat(3,56px);gap:4px}
+  #craftGrid.w2{grid-template-columns:repeat(2,56px)}
+  .bigSlot{width:56px;height:56px;background:#8b8b8b;border:2px solid #373737;border-radius:3px;
+    box-shadow:inset 2px 2px 0 rgba(255,255,255,.35),inset -2px -2px 0 rgba(0,0,0,.35);
+    position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .bigSlot canvas{width:40px;height:40px;image-rendering:pixelated}
+  .bigSlot .cnt{position:absolute;right:3px;bottom:0;color:#fff;font:bold 13px monospace;text-shadow:1px 1px 1px #000}
+  .bigSlot.sel{border-color:#ffe97a}
+  .bigSlot.out{width:64px;height:64px;border-color:#5a7a3a}
+  .craftArrow{font-size:34px;color:#333;font-weight:bold}
+  .invRow{display:flex;gap:4px;justify-content:center;margin-bottom:12px}
+  .invRow .slot{cursor:pointer}
+  .invRow .slot.src{border-color:#ffe97a}
+  .refHead{font-size:12px;color:#444;margin:6px 0}
+  .refHead .need3{color:#777}
+  #furnRow{display:flex;align-items:center;gap:16px;justify-content:center;margin-bottom:12px}
+  #fMid{display:flex;flex-direction:column;align-items:center;gap:6px}
+  #fFlame{font-size:22px;filter:grayscale(1)}
+  #fFlame.on{filter:none}
+  .progWrap{width:72px;height:8px;background:#555;border-radius:4px;overflow:hidden}
+  #fProg{height:100%;width:0;background:#e25822}
+  #tradeList .recipe .arrow{font-size:18px;color:#333;font-weight:bold;margin:0 8px}
+  #tradeList .recipe .give,#tradeList .recipe .get{display:flex;align-items:center}
+  #tradeList .recipe .give canvas{width:32px;height:32px;image-rendering:pixelated;margin-right:4px}
+  #tradeList .recipe .get canvas{width:32px;height:32px;image-rendering:pixelated;margin-right:4px}
+  .emCnt{color:#0a6b0a;font-size:15px}
+
+  /* ---------- 地图 ---------- */
+  #mapCv{display:block;margin:0 auto 10px;background:#0a0f0c;border:2px solid #444;border-radius:4px;
+    image-rendering:pixelated;max-width:100%;cursor:crosshair}
+  #mapLegend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;color:#333;margin-bottom:10px}
+  #mapLegend .mi{display:flex;align-items:center;gap:4px}
+  #mapLegend .dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:1px solid #555}
+
+  /* ---------- 移动端触控 UI（自动检测，仅手机显示） ---------- */
+  #touchUI{display:none;pointer-events:none}
+  body.mobile #touchUI{display:block}
+  body.mobile #handTip{display:none}
+  body.mobile #info{font-size:10px;line-height:1.4}
+  body.mobile .slot{width:42px;height:42px;border-width:2px}
+  body.mobile .slot canvas{width:32px;height:32px}
+  body.mobile #hotbar{bottom:6px;gap:3px}
+  body.mobile #hearts{font-size:16px;bottom:60px}
+  body.mobile #msg{bottom:110px;font-size:14px}
+  #opsMobile{display:none}
+  body.mobile #opsDesktop{display:none}
+  body.mobile #opsMobile{display:block}
+  #touchUI>*{pointer-events:auto}
+  #joyPad{position:fixed;left:16px;bottom:76px;width:118px;height:118px;border-radius:50%;
+    background:rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.35);z-index:10;touch-action:none}
+  #joyKnob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;
+    background:rgba(255,255,255,.4);border:2px solid rgba(255,255,255,.7)}
+  #btnCluster{position:fixed;right:14px;bottom:76px;display:flex;gap:10px;align-items:flex-end;z-index:10}
+  .tbtn{width:58px;height:58px;border-radius:50%;background:rgba(0,0,0,.32);border:2px solid rgba(255,255,255,.4);
+    color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;touch-action:none}
+  .tbtn:active{background:rgba(255,255,255,.4)}
+  .tbtn.big{width:66px;height:66px;font-size:27px}
+  .tbtn.small{width:44px;height:44px;font-size:18px}
+  #sideBtns{position:fixed;right:10px;top:10px;display:flex;flex-direction:column;gap:10px;z-index:10}
+  #rotateHint{display:none}
+  @media (orientation:portrait){
+   body.mobile #rotateHint{display:flex;position:fixed;inset:0;z-index:60;background:#16200f;color:#fff;
+    align-items:center;justify-content:center;font-size:22px;text-align:center;line-height:2}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="hud" class="hidden">
+  <div id="vig"></div><div id="waterOv"></div>
+  <div id="cross">+</div>
+  <div id="mineProgWrap"><div id="mineProg"></div></div>
+  <div id="hearts"></div>
+  <div id="hotbar"></div>
+  <div id="msg"></div>
+  <div id="info"></div>
+  <div id="handTip">左键 挖掘/攻击 · 右键 放置/交互 · M 地图 · B 背包 · R 复位回地表<br>村民·合成台·熔炉·床·宝箱·活塞 均右键使用 · E 合成</div>
+</div>
+
+<div id="touchUI">
+  <div id="joyPad"><div id="joyKnob"></div></div>
+  <div id="btnCluster">
+    <div class="tbtn" id="btnJump">⤒</div>
+    <div class="tbtn big" id="btnMine">⛏</div>
+    <div class="tbtn big" id="btnUse">🎯</div>
+  </div>
+  <div id="sideBtns">
+    <div class="tbtn small" id="btnCraft">🛠</div>
+    <div class="tbtn small" id="btnBackpack">🎒</div>
+    <div class="tbtn small" id="btnMap">🗺</div>
+    <div class="tbtn small" id="btnTele">⬆</div>
+    <div class="tbtn small" id="btnPause">⏸</div>
+  </div>
+</div>
+<div id="rotateHint">🔄<br>请横屏游玩<br>（竖屏体验不佳）</div>
+
+<div id="craftPanel" class="hidden"><h2 id="craftTitle">⛏ 合成</h2>
+  <div id="craftMain">
+    <div id="craftGrid"></div>
+    <div class="craftArrow">→</div>
+    <div id="craftOut" class="bigSlot out"></div>
+  </div>
+  <div id="invRow" class="invRow"></div>
+  <div class="refHead">配方参考 —— 材料够直接点右侧【合成】按钮即可！★ 配方用网格摆放需在合成台旁按 E（自动 3×3）或右键合成台</div>
+  <div id="recipes"></div>
+  <button id="craftClose">关闭 (E)</button></div>
+
+<div id="furnacePanel" class="hidden"><h2>🔥 熔炉</h2>
+  <div id="furnRow">
+    <div id="fIn" class="bigSlot"></div>
+    <div id="fMid"><div id="fFlame">🔥</div><div class="progWrap"><div id="fProg"></div></div></div>
+    <div id="fOut" class="bigSlot out"></div>
+  </div>
+  <div id="invRow2" class="invRow"></div>
+  <div style="text-align:center;font-size:12px;color:#444;margin-bottom:8px">点物品→点左侧格子放原料/燃料（燃料：煤/原木/木板）· 点产物格子取出</div>
+  <button id="furnClose">关闭 (E)</button></div>
+
+<div id="tradePanel" class="hidden"><h2>🧑‍🌾 村民交易 <span id="emCnt" class="emCnt"></span></h2>
+  <div id="tradeList"></div>
+  <button id="tradeClose">关闭 (E)</button></div>
+
+<div id="mapPanel" class="hidden"><h2>🗺 地图 <span id="mapDim" style="font-size:14px;color:#444"></span></h2>
+  <canvas id="mapCv" width="672" height="672"></canvas>
+  <div id="mapLegend"></div>
+  <button id="mapClose">关闭 (M)</button></div>
+
+<div id="backpackPanel" class="hidden"><h2>🎒 背包 <span id="bpCount" style="font-size:14px;color:#444"></span></h2>
+  <div id="bpGrid"></div>
+  <div style="text-align:center;font-size:12px;color:#444;margin-bottom:8px">点选拿起/放下 · 长按拆分 · 背包与快捷栏互相点选移动</div>
+  <div style="text-align:center"><button id="bpSort">📦 一键整理</button></div>
+  <button id="bpClose">关闭 (B)</button></div>
+
+<div id="startScr" class="screen">
+  <h1>我的<span>世界</span> <small style="font-size:18px;color:#ccc">Minecraft · Web Edition</small></h1>
+  <div class="sub">体素生存 · 挖矿合成 · 怪物战斗 —— 纯前端实现 · 自动适配电脑/手机</div>
+  <div class="panel">
+    <b>操作方式</b><br>
+    <div id="opsDesktop">
+    <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移动　<kbd>空格</kbd> 跳跃/游泳<br>
+    <kbd>鼠标左键</kbd> 挖方块 / 攻击怪物（按住持续挖）<br>
+    <kbd>鼠标右键</kbd> 放置方块 / 吃食物　<kbd>滚轮</kbd>/<kbd>1-9</kbd> 切换物品栏<br>
+    <kbd>E</kbd> 随身合成(2×2)　右键<b>合成台</b>解锁 3×3　<kbd>M</kbd> 地图　<kbd>B</kbd> 背包　<kbd>R</kbd> 复位回地表　<kbd>Esc</kbd> 暂停<br>
+    </div>
+    <div id="opsMobile">
+    左摇杆 移动　⤒ 跳跃<br>
+    ⛏ 挖方块/攻击（对准准星，松开停止）　🎯 放置/使用<br>
+    🛠 合成　🎒 背包　🗺 地图　⬆ 复位　⏸ 暂停<br>
+    屏幕拖拽 转视角　点选物品格切换/拿起　<b>长按</b> 拆分堆叠<br>
+    </div>
+    <b>玩法提示</b><br>
+    · 先徒手撸树 → 木板/木棍 → 木镐木剑 → 挖石头升级 → 找煤、铁、钻石、绿宝石矿<br>
+    · 夜晚刷新<b style="color:#7ef">僵尸</b>、<b style="color:#7ef">骷髅弓箭手</b>（白天燃烧）和<b style="color:#7ef">苦力怕</b>（会爆炸！）<br>
+    · <b>熔炉</b>(8圆石)右键打开：炼铁锭、烧玻璃、烤猪排；<b>床</b>(羊毛+木板)右键睡觉跳过夜晚+设重生点<br>
+    · <b>村民</b>住在村庄，右键交易（绿宝石货币）；羊掉羊毛、骷髅掉骨头；<b>宝箱</b>右键开出惊喜<br>
+    · 可合成<b>弓+箭</b>远程打怪、<b>金苹果</b>回满血；挖矿掉落物自动飞向你来<br>
+    · <b>世界无限大</b>：走多远生成多远，按 <kbd>M</kbd> 打开地图看地形和生物位置（猪灵在下界）<br>
+    · 地下深处有<b>岩浆池</b>和黑曜石；发光青色<b>原力晶石</b>→活塞/原力苹果（伤害翻倍buff）<br>
+    · 深处有<b>黑曜石</b>(需钻石镐)：搭 4宽×5高 门框，手持<b>打火石</b>右键点燃 → 进入<b style="color:#f7a">下界</b>！<br>
+    · 下界有下界岩、石英、萤石、岩浆（烫！）和僵尸猪灵；TNT=火药+沙子，可连锁爆炸
+  </div>
+  <button class="mcbtn" id="startBtn">开始游戏</button>
+</div>
+
+<div id="pauseScr" class="screen hidden"><h1>游戏暂停</h1><button class="mcbtn" id="resumeBtn">继续游戏</button></div>
+<div id="deathScr" class="screen hidden"><h1>你死了！</h1><button class="mcbtn" id="respawnBtn">重生</button></div>
+
+<script src="three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

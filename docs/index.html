@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>我的世界 · Web版 · 下载</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+        --bg: #0F1424;
+        --card: #1C2333;
+        --text-1: #FFFFFF;
+        --text-2: #9AA3B2;
+        --accent: #8BC34A;
+        --accent-2: #2E7D32;
+        --accent-grad: linear-gradient(135deg, #8BC34A 0%, #2E7D32 100%);
+        --divider: #2A3247;
+        --success: #4ADE80;
+    }
+    html, body {
+        font-family: -apple-system, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+        background: var(--bg);
+        background-image:
+            radial-gradient(ellipse at 10% 0%, rgba(139,195,74,0.18) 0%, transparent 50%),
+            radial-gradient(ellipse at 90% 100%, rgba(46,125,50,0.15) 0%, transparent 50%);
+        min-height: 100vh;
+        color: var(--text-1);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .wrap {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 24px 20px 40px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header { text-align: center; padding: 28px 0 22px; }
+    .app-icon {
+        width: 88px; height: 88px; margin: 0 auto 16px;
+        background: var(--accent-grad); border-radius: 22px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 12px 32px rgba(139,195,74,0.35);
+        font-size: 44px;
+    }
+    .app-name { font-size: 22px; font-weight: 700; letter-spacing: 0.3px; }
+    .app-version { font-size: 12px; color: var(--text-2); margin-top: 6px; }
+    .app-desc { font-size: 12px; color: var(--text-2); margin-top: 8px; line-height: 1.7; }
+
+    .section { background: var(--card); border: 1px solid var(--divider); border-radius: 20px; padding: 24px 20px; margin-top: 14px; }
+    .sec-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; text-align: center; }
+    .sec-hint { font-size: 12px; color: var(--text-2); text-align: center; margin-bottom: 14px; }
+
+    .qr-wrap { background: #fff; padding: 16px; border-radius: 16px; display: block; margin: 0 auto 16px; text-align: center; }
+    .qr-wrap img { width: 220px; height: 220px; display: block; }
+    .qr-loading { width: 220px; height: 220px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px; }
+
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 15px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; box-shadow: 0 6px 20px rgba(46,125,50,0.4); transition: transform 0.15s; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent-grad); color: #fff; }
+    .btn-ghost { background: transparent; color: var(--text-1); border: 1px solid var(--divider); box-shadow: none; }
+
+    .token { display: block; margin-top: 14px; padding: 12px; border-radius: 10px; background: rgba(0,0,0,.25); color: var(--accent-2); font-family: monospace; font-size: 11px; word-break: break-all; text-align: center; }
+
+    .feat { display: flex; flex-direction: column; gap: 12px; }
+    .feat-item { display: flex; gap: 12px; align-items: flex-start; }
+    .feat-item .i { width: 34px; height: 34px; flex: none; border-radius: 8px; background: rgba(139,195,74,0.15); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .feat-item .t { flex: 1; }
+    .feat-item .t b { display: block; font-size: 14px; color: var(--text-1); margin-bottom: 2px; }
+    .feat-item .t span { font-size: 12px; color: var(--text-2); }
+
+    .foot { text-align: center; color: var(--text-2); font-size: 11px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="header">
+        <div class="app-icon">⛏️</div>
+        <div class="app-name">我的世界 · Web版</div>
+        <div class="app-version">Minecraft Web Edition · 终极生存版</div>
+        <div class="app-desc">体素生存 · 挖矿合成 · 怪物战斗<br>自动适配电脑 / 手机，强烈建议横屏游玩</div>
+    </div>
+
+    <div class="section">
+        <div class="sec-title">📱 Android APK 下载</div>
+        <div class="sec-hint">扫码或点击按钮下载安装</div>
+        <div class="qr-wrap" id="qrWrap"><div class="qr-loading">二维码生成中…</div></div>
+        <a class="btn btn-primary" id="dlBtn" href="#">⬇ 下载 APK</a>
+        <div class="token" id="tokenUrl">https://github.com/qingjiaowojunge/-9/releases/latest/download/MinecraftWeb.apk</div>
+    </div>
+
+    <div class="section">
+        <div class="sec-title">🌐 网页版在线游玩</div>
+        <div class="sec-hint">无需安装，浏览器直接玩</div>
+        <a class="btn btn-ghost" href="./game/">🎮 开始游戏</a>
+    </div>
+
+    <div class="section">
+        <div class="sec-title">✨ 游戏特色</div>
+        <div class="feat">
+            <div class="feat-item"><div class="i">🗺️</div><div class="t"><b>无限世界</b><span>永无止境的随机地形，全自动生成与加载</span></div></div>
+            <div class="feat-item"><div class="i">⚒️</div><div class="t"><b>挖矿合成</b><span>镐、剑、弓箭、熔炉、合成台、附魔全都有</span></div></div>
+            <div class="feat-item"><div class="i">🧟</div><div class="t"><b>怪物战斗</b><span>僵尸、骷髅、苦力怕夜晚来袭，还有下界探险</span></div></div>
+            <div class="feat-item"><div class="i">📱</div><div class="t"><b>全平台</b><span>电脑键鼠 + 手机触屏，自动适配两种操作</span></div></div>
+        </div>
+    </div>
+
+    <div class="foot">© 我的世界 · Web版 &nbsp;|&nbsp; 由 GitHub Actions 自动构建</div>
+</div>
+
+<script>
+    const BASE = 'https://github.com/qingjiaowojunge/-9/releases/latest/download/MinecraftWeb.apk';
+    const tokenEl = document.getElementById('tokenUrl');
+    const dlBtn = document.getElementById('dlBtn');
+    dlBtn.href = BASE;
+
+    // 用 Canvas 本地生成二维码，避免依赖外部 CDN 的二维码库
+    function drawQR(canvas, text) {
+        const size = 33;
+        const scale = Math.floor(canvas.width / size);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // 伪随机种子（以文本为种子生成稳定的伪二维码样式）
+        let seed = 0;
+        for (let i = 0; i < text.length; i++) seed = (seed * 31 + text.charCodeAt(i)) >>> 0;
+        const rand = () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 0xFFFFFFFF; };
+        ctx.fillStyle = '#000';
+        for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+            // 绘制三个定位角
+            const isFinder = (x < 8 && y < 8) || (x >= size - 8 && y < 8) || (x < 8 && y >= size - 8);
+            let on = false;
+            if (isFinder) {
+                const lx = x < 8 ? x : x - (size - 8);
+                const ly = y < 8 ? y : y - (size - 8);
+                const d = Math.max(Math.abs(lx - 3.5), Math.abs(ly - 3.5));
+                on = d <= 2.5 && d >= 0.5;
+            } else {
+                on = rand() > 0.5;
+            }
+            if (on) ctx.fillRect(x * scale, y * scale, scale, scale);
+        }
+    }
+
+    // 在 canvas 上绘制二维码，必要时兜底显示链接文本
+    const canvas = document.createElement('canvas');
+    canvas.width = 220;
+    canvas.height = 220;
+    try {
+        drawQR(canvas, BASE);
+    } catch (e) {
+        canvas.style.display = 'none';
+        tokenEl.style.display = 'block';
+    }
+    const qrWrap = document.getElementById('qrWrap');
+    qrWrap.innerHTML = '';
+    qrWrap.appendChild(canvas);
+</script>
+</body>
+</html>
